@@ -1,14 +1,42 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
-
-\title{Quantum Unfolding}
-\author{Riccardo Di Sipio}
-\date{February 2019}
+\usepackage{lineno,hyperref}
+\modulolinenumbers[5]
+\linenumbers
 
 \begin{document}
 
+\newcommand{\ie}{{\sl i.e.}~}
+\newcommand{\eg}{{\sl e.g.}~}
+
+
+\title{Quantum Unfolding}
+
+\author{Riccardo Di Sipio}
+
 \maketitle
 
-\section{Introduction}
 
+\begin{abstract}
+Unfolding, so cool.
+\end{abstract}
+
+\section{Introduction}
+Unfolding is the procedure of correcting for distortions due to limited resolution of the measuring device\cite{cowan} as found in particle physics\cite{atlas_unf,cms_unf}, astronomy\cite{astro_unf} and crystallography\cite{cryst_unf}, or other source of noise in a communication channel\cite{5g_lte_mimo}. The mathematical treatments is also known as the inverse problem or deconvolution. Unfolding is not necessary if the only goal is to compare the theory with the experimental results. In this case, a simulation of the experimental apparatus is used to account \eg for the interaction of radiation with matter, nuclear interactions, lens distortions, etc. On the other hand, unfolding is essential if the aim is to compare  measurements coming from different experiments. In general, each experimental apparatus has a unique signature in terms of detection efficiency, geometric acceptance and resolution.  
+
+\begin{thebibliography}{99}
+
+\bibitem{cowan} Statistical data analysis, G. Cowan, Oxford Science Publications
+
+\bibitem{atlas_unf} Measurements of $t\bar{t}$ differential cross-sections of highly boosted top quarks decaying to all-hadronic final states in pp collisions at $sqrt{s}$ = 13 TeV using the ATLAS detector, The ATLAS Collaboration, Phys. Rev. D 98, 012003 (2018)
+
+\bibitem{cms_unf}
+
+\bibitem{astro_unf}
+
+\bibitem{cryst_unf}
+
+\bibitem{5g_lte_mimo}
+
+\end{thebibliography}
 \end{document}
