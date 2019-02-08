@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{lineno,hyperref}
+\usepackage{amsmath}
 \modulolinenumbers[5]
 \linenumbers
 
@@ -10,19 +11,108 @@
 \newcommand{\eg}{{\sl e.g.}~}
 
 
-\title{Quantum Unfolding}
+\title{\left < {\rm Quantum} |  {\rm Unfolding} \right >}
 
 \author{Riccardo Di Sipio}
 
 \maketitle
-
 
 \begin{abstract}
 Unfolding, so cool.
 \end{abstract}
 
 \section{Introduction}
-Unfolding is the procedure of correcting for distortions due to limited resolution of the measuring device\cite{cowan} as found in particle physics\cite{atlas_unf,cms_unf}, astronomy\cite{astro_unf} and crystallography\cite{cryst_unf}, or other source of noise in a communication channel\cite{5g_lte_mimo}. The mathematical treatments is also known as the inverse problem or deconvolution. Unfolding is not necessary if the only goal is to compare the theory with the experimental results. In this case, a simulation of the experimental apparatus is used to account \eg for the interaction of radiation with matter, nuclear interactions, lens distortions, etc. On the other hand, unfolding is essential if the aim is to compare  measurements coming from different experiments. In general, each experimental apparatus has a unique signature in terms of detection efficiency, geometric acceptance and resolution.  
+
+\section{Unfolding}
+Unfolding is the procedure of correcting for distortions due to limited resolution of the measuring device\cite{cowan} as found in particle physics\cite{atlas_unf,cms_unf}, astronomy\cite{astro_unf} and other fields. This mathematical treatments is also known as the {\sl inverse problem} or {\sl deconvolution}. Unfolding is not necessary if the only goal is to compare the theory with the experimental results. In this case, a simulation of the experimental apparatus is used to account \eg for the interaction of radiation with matter, nuclear interactions, lens distortions, etc. In practical terms, this is usually carried out using computer codes such as Geant4\cite{Geant4}, FLUKA\cite{FLUKA} or Delphes\cite{Delphes} On the other hand, unfolding is essential if the aim is to compare measurements coming from different experiments. In general, each experimental apparatus has a unique signature in terms of detection efficiency, geometric acceptance and resolution. The overall effect is that the numerical value of some quantity generated in a given physical process is changed by the process of measurement. Unfolding is the mathematical procedure to "correct" for these effects and recover the original value.
+
+\paragraph{}
+Usually, the physical observable $x$ being measured is distributed with a probability density function $f(x)$ which functional form is not known a priori. Hence, it is customary to make use of binned distributions in the form of normalized histograms. Hence, the probability $p_j$ of find $x$ in the bin $j$ is simply given by the integral of $f(x)$ in that bin, \ie:
+
+\begin{equation}
+    p_j = \int f(x)dx
+\end{equation}
+
+The sum of all $p_j$ is equal to one. This probability distribution is turned into an actual physical prediction by multiplying the value of each bin by a dimensionful quantity such as a cross-section. Alternatively, one can use this probability density function to simulate the physics process multiple times, typically using Monte Carlo methods, as it is done for example in so-called event generators such as Pythia\cite{Pythia8} or Herwig\cite{Herwig7}. The result of this operation is an histogram representing the "true" distribution $x$. After applying the effect of the experimental apparatus, one obtains another histogram corresponding to the "reconstructed" distribution $y$. 
+
+\paragraph{}
+In its simplest form, the method to unfold the measurement to the truth level is to estimate efficiency factors $\epsilon_j$ for each bin from the simulation:
+
+\begin{equation}
+  \epsilon_j =  y_j / x_j
+\end{equation}
+
+The unfolded distribution $\hat{x}$ is thus obtained by applying these efficiency factors to a measured distribution $d$ such that:
+
+\begin{equation}
+    \hat{x}_j = \epsilon_j d_j
+\end{equation}
+
+This method, called {\sl bin-to-bin correction}, has strong limitations: the true- and reco-level histograms must have the same binning, correlations between adjacent bins are neglected, and there is no way to account for migration of events generated in a truth bin $j$ but ending up in a reco bin $i$. 
+
+\paragraph{}
+These difficulties can be overcome if we promote the efficiency correction factors $\epsilon_j$ to a matrix $R_{ij}$ (usually called {\sl response matrix}), estimated from the simulation, such that:
+\begin{eqnarray}
+    y & = & Rx\\
+    \hat{x} &=& R^{-1}d \label{eq:unreg_unfolding} 
+\end{eqnarray}
+
+In principle, the number of bins at reco and truth level do not have to match, allowing also for over- and under-constrained unfolding. The response matrix can be expressed as the product of three matrices:
+%
+\begin{equation}
+R_{ij} = A_i^{-1}M_{ij}E_j =
+\left(\begin{smallmatrix}
+\frac{1}{a_0} & & 0 \\ 
+ & \ddots & \\ 
+0 & & \frac{1}{a_N} 
+\end{smallmatrix}\right)
+\left(\begin{smallmatrix}
+M_{00} & \cdots & M_{0N} \\ 
+\vdots & \ddots & \vdots \\ 
+M_{N0} & \cdots & M_{NN} 
+\end{smallmatrix}\right)
+\left(\begin{smallmatrix}
+\epsilon_0 & & 0 \\ 
+ & \ddots & \\ 
+0 & & \epsilon_N 
+\end{smallmatrix}\right),
+\end{equation}
+%
+where $A$, $M$ and $E$ represent acceptance, migration and efficiency corrections, respectively. 
+Typically, $M$ is presented as a matrix of (reco, truth) with rows that are normalized to unity, so that each entry is the probability that events produced in a given truth bin $j$ will be observed in the reco bin $i$. The inverse of this matrix multiplication, as applied in Eq.\ref{eq:unreg_unfolding}, is commonly known as {\sl unregularized matrix inversion unfolding}. 
+
+\paragraph{}
+Despite its relative simplicity, this method still suffers from numerical instabilities in the inversion of the response matrix. Commonly, this is caused by limitations in the simulations of physics processes, that may require very large computational resources to estimate with a high degree of precision off-diagonal elements that encode very unlikely situations where long-range migrations happen, or the efficiency drops dramatically. One possible approach is to constrain the truth-level distribution $\hat{x}$ by maximizing a likelihood function $\mathcal{L}(y|d)$ that depends on the estimated reco-level spectrum $y = y(\hat{x})$ and observed data $d$. In the case of a counting experiment, the likelihood is usually the product of Poisson or Gaussian (in the limit of large $y$) distributions for each bin. 
+Ideally, the truth-level unfolded distribution $\hat{x}$ is expected to show a good degree of regularity. For example, there should not be sharp transitions unless otherwise anticipated from a theoretical model. Among various possibilities, the most common way to achieve this is to impose an additional constraint in the form of a Lagrange multiplier added to the likelihood function, whose effect is to favour smoother solutions. This is equivalent to minimize the second derivative of the solution. This method is known as {\sl Tikhonov regularization}. 
+
+\paragraph{}
+The complete likelihood to be maximized is thus:
+%
+\begin{eqnarray}
+\mathcal{L}(y|d) & = & \prod_i^N Poiss(y_i, d_i) \times \prod_j^N e^{- \lambda \rho_j} \\
+Poiss(y_i, d_i) & = & \frac{(y_i)^{d_i}}{d_i!}e^{-y_i}
+\\
+y_i & = & \sum_{j}^N R_{ij}\hat{x}_j \\
+\rho_j & = & \sum_{j=2}^{N-1} \left | \hat{x}_{j+1} - \hat{x}_{j-1} \right |
+\end{eqnarray}
+
+For numerical stability reason, it is often preferable to minimize the logarithm of the likelihood $\log \mathcal{L}(y|d)$ . More advanced methods \cite{dagostini,fbu} have been developed to integrate out {\sl nuisance parameters}, \ie parameters needed to account for extra variation in the model such as sources of systematic uncertainty. As demanded by Bayes' theorem, a further term is added to the likelihood to encode any {\sl a priori} knowledge about the truth-level distribution. 
+
+\section{Quantum Annealing}
+
+\begin{eqnarray}
+\hat{H} & = & \sum_{i,j} J_{ij}\hat{\sigma}^z_i \hat{\sigma}^z_j + \sum_i h_i \hat{\sigma}^z_i\\
+J_{ij} & \in & [-1,1] \\
+h_i  & \in & [-2,2]
+\end{eqnarray}
+
+\begin{equation}
+    \min_{J_{i,j}, h_i} \min_{\hat{\sigma} }\left < \hat{H} \right >
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%
+% BIBLIOGRAPHY
+%%%%%%%%%%%%%%%%%%%%%
 
 \begin{thebibliography}{99}
 
@@ -30,13 +120,23 @@ Unfolding is the procedure of correcting for distortions due to limited resoluti
 
 \bibitem{atlas_unf} Measurements of $t\bar{t}$ differential cross-sections of highly boosted top quarks decaying to all-hadronic final states in pp collisions at $sqrt{s}$ = 13 TeV using the ATLAS detector, The ATLAS Collaboration, Phys. Rev. D 98, 012003 (2018)
 
-\bibitem{cms_unf}
+\bibitem{cms_unf} Measurement of inclusive and differential Higgs boson production cross sections in the diphoton decay channel in proton-proton collisions at $sqrt{s}$ = 13 TeV, The CMS Collaboration, JHEP 01 (2019) 183
 
-\bibitem{astro_unf}
+\bibitem{astro_unf}  Aperture Synthesis with a Non-Regular Distribution of Interferometer Baselines, J. A. Hoegbom, Astronomy and Astrophysics Supplement, Vol. 15, p.417 (1974)
 
-\bibitem{cryst_unf}
+\bibitem{Geant4} GEANT4 Collaboration, Nuclear Instruments and Methods in Physics Research A 506, 250 (2003).
 
-\bibitem{5g_lte_mimo}
+\bibitem{FLUKA} G. Battistoni et al., FLUKA as a new high E cosmic ray generator, Nuclear Instruments and Methods in Physics Research A626-627 (2011) S191 
+
+\bibitem{Delphes} DELPHES 3: a modular framework for fast simulation of a generic collider experiment, J. de Favereau et al., J. High Energ. Phys. (2014) 2014: 57
+
+\bibitem{Pythia8} A Brief Introduction to PYTHIA 8.1, T. Sj\"ostrand, S. Mrenna and P. Z. Skands, Comput. Phys. Commun. 178 (2008) 852
+
+\bibitem{Herwig7} Herwig 7.0/Herwig++ 3.0 release note, J. Bellm et al., Eur. Phys. J. C 76 (2016) 196
+
+\bibitem{dagostini} G. D’Agostini, A Multidimensional unfolding method based on Bayes’ theorem, Nucl. Instrum. Meth. A362 (1995) 487–498
+
+\bibitem{fbu} G. Choudalakis, Fully Bayesian Unfolding, arXiv:1201.4612.
 
 \end{thebibliography}
 \end{document}
